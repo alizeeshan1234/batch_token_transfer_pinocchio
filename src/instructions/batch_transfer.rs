@@ -20,7 +20,7 @@ pub fn process_batch_transfer(accounts: &[AccountInfo], instruction_data: &[u8])
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let batch_state_account_info = BatchState::from_account_info_mut(batch_state)?;
+    let mut batch_state_account_info = BatchState::from_account_info_mut(batch_state)?;
 
     let (batch_state_pda, batch_bump) = pubkey::find_program_address(
         &[b"batch_state", creator.key().as_ref(), mint.key().as_ref(), &batch_state_account_info.batch_id.to_le_bytes()],

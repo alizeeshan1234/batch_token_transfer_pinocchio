@@ -1,4 +1,4 @@
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{account_info::{AccountInfo, RefMut, Ref}, program_error::ProgramError, pubkey::Pubkey};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(C)]
@@ -15,24 +15,24 @@ pub struct BatchState {
 impl BatchState {
     pub const LEN: usize = core::mem::size_of::<BatchState>();
 
-    pub fn from_account_info(accounts: &AccountInfo) -> Result<&Self, ProgramError> {
+    pub fn from_account_info(accounts: &AccountInfo) -> Result<Ref<Self>, ProgramError> { 
+        if accounts.data_len() < Self::LEN { 
+            return Err(ProgramError::InvalidAccountData); 
+        } 
+  
+        Ok(Ref::map(accounts.try_borrow_data()?, |data| unsafe {
+            &*(data.as_ptr() as *const Self)
+        }))
+    } 
+
+    pub fn from_account_info_mut(accounts: &AccountInfo) -> Result<RefMut<Self>, ProgramError> {
         if accounts.data_len() < Self::LEN {
             return Err(ProgramError::InvalidAccountData);
         }
 
-        Ok(unsafe {
-            &*(accounts.try_borrow_data()?.as_ptr() as *const Self)
-        })
-    }
-
-    pub fn from_account_info_mut(accounts: &AccountInfo) -> Result<&mut Self, ProgramError> {
-        if accounts.data_len() < Self::LEN {
-            return Err(ProgramError::InvalidAccountData);
-        }
-
-        Ok(unsafe {
-            &mut *(accounts.try_borrow_mut_data()?.as_mut_ptr() as *mut Self)
-        })
+        Ok(RefMut::map(accounts.try_borrow_mut_data()?, |data| unsafe {
+            &mut *(data.as_mut_ptr() as *mut Self)
+        }))
     }
 
     pub fn is_completed(&self) -> bool {

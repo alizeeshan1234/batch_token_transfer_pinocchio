@@ -64,7 +64,7 @@ pub fn process_initialize_batch_state(accounts: &[AccountInfo], instruction_data
             owner: &crate::ID
         }.invoke()?;
 
-        let batch_state_account_mut = BatchState::from_account_info_mut(batch_state_account)?;
+        let mut batch_state_account_mut = BatchState::from_account_info_mut(batch_state_account)?;
         batch_state_account_mut.batch_id = batch_id;
         batch_state_account_mut.authority = *creator.key();
         batch_state_account_mut.mint = *mint.key();
