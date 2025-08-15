@@ -1,4 +1,4 @@
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{account_info::{AccountInfo, RefMut, Ref}, program_error::ProgramError, pubkey::Pubkey};
 
 const MAX_RECIPIENTS: usize = 10;
 
@@ -41,21 +41,23 @@ impl BatchTransfer {
         self.amount_per_recipient.saturating_mul(self.num_recipients as u64)
     }
 
-    pub fn from_account_info(account: &AccountInfo) -> Result<&Self, ProgramError> {
+    pub fn from_account_info(account: &AccountInfo) -> Result<Ref<Self>, ProgramError> {
         if account.data_len() < Self::LEN {
             return Err(ProgramError::InvalidAccountData);
         }
 
-        let data = account.try_borrow_data()?;
-        Ok(unsafe { &*(data.as_ptr() as *const Self) })
+        Ok(Ref::map(account.try_borrow_data()?, |data| unsafe {
+            &*(data.as_ptr() as *const Self)
+        }))
     }
 
-    pub fn from_account_info_mut(account: &AccountInfo) -> Result<&mut Self, ProgramError> {
+    pub fn from_account_info_mut(account: &AccountInfo) -> Result<RefMut<Self>, ProgramError> {
         if account.data_len() < Self::LEN {
             return Err(ProgramError::InvalidAccountData);
         }
 
-        let mut data = account.try_borrow_mut_data()?;
-        Ok(unsafe { &mut *(data.as_mut_ptr() as *mut Self) })
+        Ok(RefMut::map(account.try_borrow_mut_data()?, |data| unsafe {
+            &mut *(data.as_mut_ptr() as *mut Self)
+        }))
     }
 }
